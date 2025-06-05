@@ -2,6 +2,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ElevatorGUI extends JFrame {
     private Elevator elevator;
@@ -17,6 +19,22 @@ public class ElevatorGUI extends JFrame {
     private JLabel[] passengerLabels;
     private JLabel elevatorLabel;
     private JLabel elevatorPassengersLabel;
+
+    private List<PassengerDot> passengersInElevatorDots = new ArrayList<>();
+
+
+    private static class PassengerDot {
+        int x, y;
+        Color color;
+        int entryFloor;
+
+        PassengerDot(int x, int y, Color color, int entryFloor) {
+            this.x = x;
+            this.y = y;
+            this.color = color;
+            this.entryFloor = entryFloor;
+        }
+    }
 
     public ElevatorGUI() {
         elevator = new Elevator();
@@ -34,7 +52,13 @@ public class ElevatorGUI extends JFrame {
     }
 
     private void initializeComponents() {
-        mainPanel = new JPanel();
+        mainPanel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                drawPassengersInElevator(g);
+            }
+        };
         mainPanel.setLayout(null);
         mainPanel.setBackground(Color.LIGHT_GRAY);
 
@@ -81,6 +105,40 @@ public class ElevatorGUI extends JFrame {
         elevatorPassengersLabel.setHorizontalAlignment(SwingConstants.CENTER);
         elevatorPassengersLabel.setForeground(Color.WHITE);
         elevatorPassengersLabel.setFont(new Font("Arial", Font.BOLD, 14));
+    }
+
+    private void drawPassengersInElevator(Graphics g) {
+        Graphics2D g2d = (Graphics2D) g.create();
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        int elevatorX = 320;
+        int elevatorY = 600 - elevator.getCurrentFloor() * 50;
+
+        for (PassengerDot dot : passengersInElevatorDots) {
+            g2d.setColor(dot.color);
+            g2d.fillOval(elevatorX + dot.x, elevatorY + dot.y, 8, 8);
+            g2d.setColor(dot.color.darker());
+            g2d.drawOval(elevatorX + dot.x, elevatorY + dot.y, 8, 8);
+        }
+
+        g2d.dispose();
+    }
+
+    private Color getFloorColor(int floor) {
+        Color[] floorColors = {
+                new Color(255, 100, 100), // Czerwony - parter
+                new Color(100, 255, 100), // Zielony - P1
+                new Color(100, 100, 255), // Niebieski - P2
+                new Color(255, 255, 100), // Żółty - P3
+                new Color(255, 100, 255), // Magenta - P4
+                new Color(100, 255, 255), // Cyan - P5
+                new Color(255, 150, 100), // Pomarańczowy - P6
+                new Color(150, 255, 150), // Jasnozielony - P7
+                new Color(150, 150, 255), // Jasnoniebieski - P8
+                new Color(255, 200, 200), // Różowy - P9
+                new Color(200, 255, 200)  // Jasnozielony - P10
+        };
+        return floorColors[floor % floorColors.length];
     }
 
     private void setupLayout() {
@@ -145,6 +203,7 @@ public class ElevatorGUI extends JFrame {
     public void updateElevatorPosition() {
         elevatorLabel.setBounds(320, 600 - elevator.getCurrentFloor() * 50, 40, 40);
         elevatorPassengersLabel.setBounds(325, 605 - elevator.getCurrentFloor() * 50, 30, 30);
+        mainPanel.repaint();
     }
 
     public void updatePassengerDisplay(int floor) {
@@ -161,6 +220,33 @@ public class ElevatorGUI extends JFrame {
 
     public void updateElevatorPassengersDisplay() {
         elevatorPassengersLabel.setText(String.valueOf(elevator.getPassengersInElevator().size()));
+        mainPanel.repaint();
+    }
+
+    public void addPassengerToElevator() {
+        int dotIndex = passengersInElevatorDots.size();
+        int x = 5 + (dotIndex % 5) * 8;
+        int y = 5 + (dotIndex / 5) * 10;
+
+        Color passengerColor = getFloorColor(elevator.getCurrentFloor());
+        PassengerDot newDot = new PassengerDot(x, y, passengerColor, elevator.getCurrentFloor());
+        passengersInElevatorDots.add(newDot);
+
+        updateElevatorPassengersDisplay();
+    }
+
+    public void removePassengerFromElevator() {
+        if (!passengersInElevatorDots.isEmpty()) {
+            passengersInElevatorDots.remove(0);
+
+            for (int i = 0; i < passengersInElevatorDots.size(); i++) {
+                PassengerDot dot = passengersInElevatorDots.get(i);
+                dot.x = 5 + (i % 5) * 8;
+                dot.y = 5 + (i / 5) * 10;
+            }
+
+            updateElevatorPassengersDisplay();
+        }
     }
 
     public void updateArrows() {
@@ -197,6 +283,8 @@ public class ElevatorGUI extends JFrame {
             floorButtons[i].setEnabled(false);
         }
 
+        passengersInElevatorDots.clear();
         updateArrows();
+        mainPanel.repaint();
     }
 }

@@ -1,14 +1,13 @@
-// ==================== Building.java ====================
 import java.util.*;
 
 public class Building {
-    private static final int FLOORS = 11; // 0-10
+    private static final int Floors = 11;
 
-    private int[] waitingPassengers = new int[FLOORS];
+    private int[] waitingPassengers = new int[Floors];
     private Set<Integer> calls = new HashSet<>();
 
     public int getFloorsCount() {
-        return FLOORS;
+        return Floors;
     }
 
     public int[] getWaitingPassengers() {
@@ -41,7 +40,7 @@ public class Building {
 
     public void generateRandomPassengers() {
         Random random = new Random();
-        for (int i = 0; i < FLOORS; i++) {
+        for (int i = 0; i < Floors; i++) {
             waitingPassengers[i] = random.nextInt(6); // 0-5 pasażerów
         }
     }

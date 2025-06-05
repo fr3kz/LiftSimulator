@@ -48,7 +48,7 @@ public class ElevatorController {
     public void exitPassenger() {
         if (simulationRunning && !elevator.isMoving() && !elevator.isEmpty()) {
             elevator.removePassenger();
-            gui.updateElevatorPassengersDisplay();
+            gui.removePassengerFromElevator(); 
             gui.updateFloorButtonsAvailability();
 
             System.out.println("Pasażer wysiadł na piętrze " + elevator.getCurrentFloor());
@@ -166,11 +166,11 @@ public class ElevatorController {
 
         for (int i = 0; i < entering; i++) {
             elevator.addPassenger();
+            gui.addPassengerToElevator(); // Dodaj kropkę do GUI
         }
 
         building.removePassengers(elevator.getCurrentFloor(), entering);
         gui.updatePassengerDisplay(elevator.getCurrentFloor());
-        gui.updateElevatorPassengersDisplay();
 
         System.out.println("Wsiadło " + entering + " pasażerów na piętrze " + elevator.getCurrentFloor());
     }

@@ -1,8 +1,7 @@
-// ==================== Elevator.java ====================
 import java.util.*;
 
 public class Elevator {
-    private static final int MAX_PASSENGERS = 5;
+    private static final int Max_Passengers = 5;
 
     private int currentFloor = 0;
     private boolean isMoving = false;
@@ -53,7 +52,7 @@ public class Elevator {
     }
 
     public void addPassenger() {
-        if (passengersInElevator.size() < MAX_PASSENGERS) {
+        if (passengersInElevator.size() < Max_Passengers) {
             passengersInElevator.add(currentFloor);
         }
     }
@@ -65,7 +64,7 @@ public class Elevator {
     }
 
     public int getAvailableSpace() {
-        return MAX_PASSENGERS - passengersInElevator.size();
+        return Max_Passengers - passengersInElevator.size();
     }
 
     public boolean isEmpty() {

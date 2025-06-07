@@ -28,7 +28,7 @@ public class ElevatorController {
     public void callElevator(int floor) {
         building.addCall(floor);
 
-        if (!elevator.isMoving()) {
+        if (!elevator.isMoving() && !gui.isElevatorAnimating()) {
             planNextMove();
         }
 
@@ -38,7 +38,7 @@ public class ElevatorController {
     public void selectDestination(int floor) {
         elevator.addDestination(floor);
 
-        if (!elevator.isMoving()) {
+        if (!elevator.isMoving() && !gui.isElevatorAnimating()) {
             planNextMove();
         }
 
@@ -46,9 +46,9 @@ public class ElevatorController {
     }
 
     public void exitPassenger() {
-        if (simulationRunning && !elevator.isMoving() && !elevator.isEmpty()) {
+        if (simulationRunning && !elevator.isMoving() && !gui.isElevatorAnimating() && !elevator.isEmpty()) {
             elevator.removePassenger();
-            gui.removePassengerFromElevator(); 
+            gui.removePassengerFromElevator();
             gui.updateFloorButtonsAvailability();
 
             System.out.println("Pasażer wysiadł na piętrze " + elevator.getCurrentFloor());
@@ -56,7 +56,7 @@ public class ElevatorController {
     }
 
     private void planNextMove() {
-        if (elevator.isMoving()) return;
+        if (elevator.isMoving() || gui.isElevatorAnimating()) return;
 
         int nextFloor = findNextDestination();
 
@@ -117,21 +117,41 @@ public class ElevatorController {
             @Override
             public void run() {
                 javax.swing.SwingUtilities.invokeLater(() -> {
-                    elevator.moveOneFloor();
-                    gui.updateElevatorPosition();
+                    // Sprawdź czy winda już nie jest animowana, zanim przejdziesz do kolejnego piętra
+                    if (!gui.isElevatorAnimating()) {
+                        elevator.moveOneFloor();
+                        gui.updateElevatorPosition(); // To rozpocznie animację
 
-                    if (building.getCalls().contains(elevator.getCurrentFloor()) ||
-                            elevator.getDestinations().contains(elevator.getCurrentFloor())) {
+                        // Sprawdź czy winda ma zatrzymać się na tym piętrze
+                        if (building.getCalls().contains(elevator.getCurrentFloor()) ||
+                                elevator.getDestinations().contains(elevator.getCurrentFloor())) {
+                            movementTimer.cancel();
+                            // Poczekaj aż animacja się skończy, potem zatrzymaj się
+                            waitForAnimationAndStop();
+                        }
+                    }
+                });
+            }
+        }, 500, 800); // Zwolniony timer, żeby animacja była płynniejsza
+    }
+
+    private void waitForAnimationAndStop() {
+        Timer waitTimer = new Timer();
+        waitTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                javax.swing.SwingUtilities.invokeLater(() -> {
+                    if (!gui.isElevatorAnimating()) {
+                        waitTimer.cancel();
                         stopAtFloor();
                     }
                 });
             }
-        }, 1000, 1000);
+        }, 50, 50);
     }
 
     private void stopAtFloor() {
         elevator.setMoving(false);
-        movementTimer.cancel();
 
         System.out.println("Winda zatrzymała się na piętrze " + elevator.getCurrentFloor());
 
@@ -157,7 +177,7 @@ public class ElevatorController {
                     planNextMove();
                 });
             }
-        }, 5000);
+        }, 3000); // Skrócony czas postoju
     }
 
     private void enterPassengers() {
@@ -166,13 +186,18 @@ public class ElevatorController {
 
         for (int i = 0; i < entering; i++) {
             elevator.addPassenger();
-            gui.addPassengerToElevator(); // Dodaj kropkę do GUI
+            gui.addPassengerToElevator();
         }
 
         building.removePassengers(elevator.getCurrentFloor(), entering);
         gui.updatePassengerDisplay(elevator.getCurrentFloor());
 
         System.out.println("Wsiadło " + entering + " pasażerów na piętrze " + elevator.getCurrentFloor());
+    }
+
+    // Ta metoda jest wywoływana przez GUI gdy animacja się kończy
+    public void onElevatorArrivedAtFloor() {
+        // Możesz tutaj dodać dodatkową logikę gdy winda dotrze na piętro
     }
 
     private void checkSimulationEnd() {

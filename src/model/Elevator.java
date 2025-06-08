@@ -1,11 +1,12 @@
+package model;
+
 import java.util.*;
 
 public class Elevator {
-    private static final int Max_Passengers = 5;
-
+    private int Max_Passengers = 5;
     private int currentFloor = 0;
     private boolean isMoving = false;
-    private int direction = 0; // 1 = góra, -1 = dół, 0 = stop
+    private int direction = 0;
     private List<Integer> passengersInElevator = new ArrayList<>();
     private List<Integer> destinations = new ArrayList<>();
 
@@ -71,7 +72,7 @@ public class Elevator {
         return passengersInElevator.isEmpty();
     }
 
-    public void moveOneFloor() {
+    public void moveForOneFloor() {
         currentFloor += direction;
     }
 }

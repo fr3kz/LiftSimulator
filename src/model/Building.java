@@ -1,3 +1,5 @@
+package model;
+
 import java.util.*;
 
 public class Building {
@@ -41,7 +43,7 @@ public class Building {
     public void generateRandomPassengers() {
         Random random = new Random();
         for (int i = 0; i < Floors; i++) {
-            waitingPassengers[i] = random.nextInt(6); // 0-5 pasażerów
+            waitingPassengers[i] = random.nextInt(6);
         }
     }
 

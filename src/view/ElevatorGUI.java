@@ -89,7 +89,6 @@ public class ElevatorGUI extends JFrame {
         callButtons = new JButton[building.getFloorsCount()];
         directionArrows = new JLabel[building.getFloorsCount()];
         floorButtons = new JButton[building.getFloorsCount()];
-        passengerLabels = new JLabel[building.getFloorsCount()];
         floorPanels = new JPanel[building.getFloorsCount()];
 
         for (int i = 0; i < building.getFloorsCount(); i++) {
@@ -115,14 +114,6 @@ public class ElevatorGUI extends JFrame {
             floorButtons[i] = new JButton(String.valueOf(i));
             floorButtons[i].setBounds(500 + (i % 3) * 40, 500 + (i / 3) * 40, 35, 35);
             floorButtons[i].setEnabled(false);
-
-            passengerLabels[i] = new JLabel("0");
-            passengerLabels[i].setBounds(130, 590 - i * 50, 40, 40);
-            passengerLabels[i].setHorizontalAlignment(SwingConstants.CENTER);
-            passengerLabels[i].setVerticalAlignment(SwingConstants.CENTER);
-            passengerLabels[i].setBorder(BorderFactory.createLineBorder(Color.BLACK));
-            passengerLabels[i].setOpaque(true);
-            passengerLabels[i].setBackground(Color.WHITE);
         }
     }
 
@@ -244,7 +235,6 @@ public class ElevatorGUI extends JFrame {
         int elevatorWidth = 40;
         int elevatorHeight = 40;
 
-
         // Ramka windy
         g2d.setColor(new Color(30, 60, 120));
         g2d.setStroke(new BasicStroke(2));
@@ -255,15 +245,6 @@ public class ElevatorGUI extends JFrame {
         g2d.fillOval(elevatorX + elevatorWidth/2 - 3, elevatorY - 5, 6, 6);
         g2d.setColor(new Color(40, 40, 40));
         g2d.drawOval(elevatorX + elevatorWidth/2 - 3, elevatorY - 5, 6, 6);
-
-        // Rysuj liczbę pasażerów w windzie
-        g2d.setColor(Color.WHITE);
-        g2d.setFont(new Font("Arial", Font.BOLD, 12));
-        String passengerCount = String.valueOf(elevator.getPassengersInElevator().size());
-        FontMetrics fm = g2d.getFontMetrics();
-        int textX = elevatorX + (elevatorWidth - fm.stringWidth(passengerCount)) / 2;
-        int textY = elevatorY + elevatorHeight - 8;
-
         g2d.dispose();
     }
 
@@ -272,7 +253,7 @@ public class ElevatorGUI extends JFrame {
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         int elevatorX = 320;
-        int elevatorY = (int) elevatorAnimationY; // Użyj animowanej pozycji
+        int elevatorY = (int) elevatorAnimationY;
 
         for (Passenger dot : passengersInElevatorDots) {
             g2d.setColor(new Color(dot.color.getRed(), dot.color.getGreen(), dot.color.getBlue(), 100));
@@ -299,13 +280,13 @@ public class ElevatorGUI extends JFrame {
             List<Passenger> floorPassengers = passengersOnFloorsDots.get(floor);
             for (int i = 0; i < floorPassengers.size(); i++) {
                 Passenger dot = floorPassengers.get(i);
-                int x = startX + (i % 8) * 12;
-                int y = floorY + 10 + (i / 8) * 12;
+                int x = startX + i * 12;
+                int y = floorY + 10;
+
 
                 g2d.setColor(dot.color);
                 g2d.fillOval(x, y, 6, 6);
                 g2d.setColor(dot.color.darker());
-                g2d.setStroke(new BasicStroke(1.5f));
                 g2d.drawOval(x, y, 6, 6);
             }
         }
@@ -319,7 +300,6 @@ public class ElevatorGUI extends JFrame {
         for (int i = 0; i < building.getFloorsCount(); i++) {
             mainPanel.add(floorPanels[i]);
             mainPanel.add(floorButtons[i]);
-            mainPanel.add(passengerLabels[i]);
         }
 
         // Etykiety pięter
@@ -374,7 +354,6 @@ public class ElevatorGUI extends JFrame {
         startButton.setEnabled(false);
 
         for (int i = 0; i < building.getFloorsCount(); i++) {
-            updatePassengerDisplay(i);
             updateFloorPassengerDots(i);
             callButtons[i].setEnabled(building.hasWaitingPassengers(i));
         }
@@ -399,19 +378,6 @@ public class ElevatorGUI extends JFrame {
         return isAnimating;
     }
 
-    public void updatePassengerDisplay(int floor) {
-        passengerLabels[floor].setText(String.valueOf(building.getWaitingPassengers(floor)));
-        if (building.getWaitingPassengers(floor) > 0) {
-            passengerLabels[floor].setBackground(Color.YELLOW);
-            passengerLabels[floor].setOpaque(true);
-        } else {
-            passengerLabels[floor].setBackground(Color.WHITE);
-            passengerLabels[floor].setOpaque(true);
-            callButtons[floor].setEnabled(false);
-        }
-        updateFloorPassengerDots(floor);
-    }
-
     public void updateFloorPassengerDots(int floor) {
         List<Passenger> floorDots = passengersOnFloorsDots.get(floor);
         int currentPassengers = building.getWaitingPassengers(floor);
@@ -422,7 +388,6 @@ public class ElevatorGUI extends JFrame {
             floorDots.add(newDot);
         }
 
-        // Jeśli jest mniej pasażerów niż kropek - usuń kropki
         while (floorDots.size() > currentPassengers) {
             floorDots.remove(floorDots.size() - 1);
         }

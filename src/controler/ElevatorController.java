@@ -229,7 +229,7 @@ public class ElevatorController {
         }
 
         building.removePassengers(currentFloor, entering);
-        gui.updatePassengerDisplay(currentFloor);
+        gui.updateFloorPassengerDots(currentFloor);
 
         System.out.println("Wsiadło " + entering + " pasażerów na piętrze " + currentFloor);
     }

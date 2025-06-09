@@ -110,6 +110,7 @@ public class ElevatorGUI extends JFrame {
             elevatorButtons[i] = new JButton(String.valueOf(i));
             elevatorButtons[i].setBounds(15 + (i % 3) * 40, 500 + (i / 3) * 40, 35, 35);
             elevatorButtons[i].setEnabled(false);
+            elevatorButtons[i].setFocusable(false);
         }
     }
 
@@ -298,7 +299,7 @@ public class ElevatorGUI extends JFrame {
         // Etykiety pięter
         for (int i = 0; i < building.getFloorsCount(); i++) {
             JLabel floorLabel = new JLabel("P" + i);
-            floorLabel.setBounds(370, 590 - i * 50, 30, 40);
+            floorLabel.setBounds(280, 590 - i * 50, 30, 40);
             floorLabel.setHorizontalAlignment(SwingConstants.CENTER);
             floorLabel.setVerticalAlignment(SwingConstants.CENTER);
             floorLabel.setFont(new Font("Arial", Font.BOLD, 12));
@@ -324,6 +325,7 @@ public class ElevatorGUI extends JFrame {
             elevatorButtons[i].addActionListener(e -> {
                 controller.selectDestination(floor);
                 elevatorButtons[floor].setEnabled(false);
+
             });
         }
 

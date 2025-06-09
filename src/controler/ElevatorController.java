@@ -23,9 +23,7 @@ public class ElevatorController {
     private Timer continueTimer;
     private Timer endTimer;
 
-    // Stan procesu wymiany pasażerów
     private boolean isExitPhase = false;
-    private boolean isEntryPhase = false;
 
     public ElevatorController(Elevator elevator, Building building, ElevatorGUI gui) {
         this.elevator = elevator;
@@ -35,9 +33,11 @@ public class ElevatorController {
 
     public void startSimulation() {
         simulationRunning = true;
+
         building.generateRandomPassengers();
         elevator.setCurrentFloor(0);
         gui.updateAfterStart();
+
         System.out.println("Symulacja rozpoczęta!");
     }
 
@@ -170,11 +170,10 @@ public class ElevatorController {
 
     private void startPassengerExchange() {
         isExitPhase = true;
-        isEntryPhase = false;
 
-        System.out.println("Faza wysiadania rozpoczęta - pasażerowie mają 3 sekundy na wysiadanie");
+        System.out.println("Faza wysiadania rozpoczęta - pasażerowie mają 4 sekundy na wysiadanie");
 
-        exitTimer = new Timer(3000, new ActionListener() {
+        exitTimer = new Timer(4000, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 exitTimer.stop();
@@ -187,28 +186,18 @@ public class ElevatorController {
     }
 
     private void startEntryPhase() {
-        isEntryPhase = true;
+        isExitPhase = false;
 
-        System.out.println("Faza wsiadania rozpoczęta");
+        System.out.println("Faza wsiadania rozpoczęta 1 sekunda");
 
         entryTimer = new Timer(1000, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 entryTimer.stop();
                 enterPassengers();
-                isEntryPhase = false;
                 gui.updateFloorButtonsAvailability();
 
-                // Po zakończeniu wymiany pasażerów, kontynuuj ruch po 2 sekundach
-                continueTimer = new Timer(2000, new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e2) {
-                        continueTimer.stop();
-                        planNextMove();
-                    }
-                });
-                continueTimer.setRepeats(false);
-                continueTimer.start();
+                planNextMove();
             }
         });
         entryTimer.setRepeats(false);
@@ -259,7 +248,6 @@ public class ElevatorController {
         stopAllTimers();
 
         isExitPhase = false;
-        isEntryPhase = false;
 
         gui.endSimulation();
 
@@ -296,7 +284,4 @@ public class ElevatorController {
         return isExitPhase;
     }
 
-    public boolean isEntryPhase() {
-        return isEntryPhase;
-    }
 }

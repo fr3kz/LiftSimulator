@@ -58,7 +58,6 @@ public class ElevatorController {
     }
 
     public void exitPassenger() {
-        // Pasażerowie mogą wysiadać tylko podczas fazy wysiadania
         if (simulationRunning && !elevator.isMoving() && !gui.isElevatorAnimating() &&
                 !elevator.isEmpty() && isExitPhase) {
 

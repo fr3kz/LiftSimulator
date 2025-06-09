@@ -42,7 +42,8 @@ public class Building {
 
     public void generateRandomPassengers() {
         Random random = new Random();
-        for (int i = 0; i < Floors; i++) {
+        for (int i = 1; i < Floors; i++) {
+
             waitingPassengers[i] = random.nextInt(6);
         }
     }

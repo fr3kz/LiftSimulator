@@ -18,17 +18,15 @@ public class ElevatorGUI extends JFrame {
     private Building building;
     private ElevatorController controller;
 
+    //ui
     private JPanel mainPanel;
     private JButton startButton;
     private JButton[] callButtons;
-    private JButton[] floorButtons;
+    private JButton[] elevatorButtons;
     private JLabel[] directionArrows;
-    private JLabel[] passengerLabels;
-
     private JPanel[] floorPanels;
 
     private Set<Integer> activeCallFloors = new HashSet<>();
-
     private List<Passenger> passengersInElevatorDots = new ArrayList<>();
     private List<List<Passenger>> passengersOnFloorsDots = new ArrayList<>();
 
@@ -38,8 +36,6 @@ public class ElevatorGUI extends JFrame {
     private Timer animationTimer;
     private boolean isAnimating = false;
     private final double ANIMATION_SPEED = 2.0;
-
-
     private double pulleyRotation = 0;
     private final double PULLEY_SPEED = 8.0;
 
@@ -88,13 +84,13 @@ public class ElevatorGUI extends JFrame {
 
         callButtons = new JButton[building.getFloorsCount()];
         directionArrows = new JLabel[building.getFloorsCount()];
-        floorButtons = new JButton[building.getFloorsCount()];
+        elevatorButtons = new JButton[building.getFloorsCount()];
         floorPanels = new JPanel[building.getFloorsCount()];
 
         for (int i = 0; i < building.getFloorsCount(); i++) {
             floorPanels[i] = new JPanel();
             floorPanels[i].setLayout(null);
-            floorPanels[i].setBounds(180, 590 - i * 50, 120, 40);
+            floorPanels[i].setBounds(450, 590 - i * 50, 120, 40);
             floorPanels[i].setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY, 2));
             floorPanels[i].setBackground(new Color(240, 240, 240));
 
@@ -111,14 +107,14 @@ public class ElevatorGUI extends JFrame {
             floorPanels[i].add(callButtons[i]);
             floorPanels[i].add(directionArrows[i]);
 
-            floorButtons[i] = new JButton(String.valueOf(i));
-            floorButtons[i].setBounds(500 + (i % 3) * 40, 500 + (i / 3) * 40, 35, 35);
-            floorButtons[i].setEnabled(false);
+            elevatorButtons[i] = new JButton(String.valueOf(i));
+            elevatorButtons[i].setBounds(15 + (i % 3) * 40, 500 + (i / 3) * 40, 35, 35);
+            elevatorButtons[i].setEnabled(false);
         }
     }
 
     private void setupAnimationTimer() {
-        animationTimer = new Timer(16, e -> { // ~60 FPS
+        animationTimer = new Timer(0, e -> {
             if (isAnimating) {
                 double targetY = 600 - targetFloor * 50;
                 double distance = targetY - elevatorAnimationY;
@@ -127,8 +123,6 @@ public class ElevatorGUI extends JFrame {
                     elevatorAnimationY = targetY;
                     isAnimating = false;
                     animationTimer.stop();
-
-
                 } else {
                     double step = Math.signum(distance) * ANIMATION_SPEED;
                     elevatorAnimationY += step;
@@ -147,15 +141,15 @@ public class ElevatorGUI extends JFrame {
         Graphics2D g2d = (Graphics2D) g.create();
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        // Szyb windy - pionowe prowadnice
+        // Szyb windy - pionowe kreski
         g2d.setColor(new Color(80, 80, 80));
-        g2d.setStroke(new BasicStroke(3));
-        // Lewa prowadnica
+        g2d.setStroke(new BasicStroke(5));
+        // Lewa sciana
         g2d.drawLine(315, 100, 315, 650);
-        // Prawa prowadnica
+        // Prawa sciana
         g2d.drawLine(365, 100, 365, 650);
 
-        // Poziome linie pięter
+        // linie pietra
         g2d.setColor(new Color(120, 120, 120));
         g2d.setStroke(new BasicStroke(1));
         for (int i = 0; i <= building.getFloorsCount(); i++) {
@@ -166,7 +160,7 @@ public class ElevatorGUI extends JFrame {
         // Górna konstrukcja budynku
         g2d.setColor(new Color(60, 60, 60));
         g2d.setStroke(new BasicStroke(4));
-        g2d.drawLine(300, 95, 380, 95); // Górna belka
+        g2d.drawLine(300, 95, 380, 95); // dach
 
         g2d.dispose();
     }
@@ -175,27 +169,26 @@ public class ElevatorGUI extends JFrame {
         Graphics2D g2d = (Graphics2D) g.create();
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        int pulleyX = 340; // Środek koła
-        int pulleyY = 80;  // Pozycja Y koła
-        int pulleyRadius = 15;
+        int circleX = 340;
+        int cricleY = 80;
+        int cricleRad = 15;
 
-        g2d.translate(pulleyX, pulleyY);
+        g2d.translate(circleX, cricleY);
         g2d.rotate(Math.toRadians(pulleyRotation));
 
         // Zewnętrzna część koła
         g2d.setColor(new Color(150, 150, 150));
-        g2d.fillOval(-pulleyRadius, -pulleyRadius, pulleyRadius * 2, pulleyRadius * 2);
+        g2d.fillOval(-cricleRad, -cricleRad, cricleRad * 2, cricleRad * 2);
         g2d.setColor(new Color(80, 80, 80));
         g2d.setStroke(new BasicStroke(2));
-        g2d.drawOval(-pulleyRadius, -pulleyRadius, pulleyRadius * 2, pulleyRadius * 2);
+        g2d.drawOval(-cricleRad, -cricleRad, cricleRad * 2, cricleRad * 2);
 
-
-
+        //kropka
         g2d.setColor(new Color(60, 60, 60));
         g2d.fillOval(-4, -4, 8, 8);
 
         g2d.rotate(-Math.toRadians(pulleyRotation));
-        g2d.translate(-pulleyX, -pulleyY);
+        g2d.translate(-circleX, -cricleY);
 
         // Lina/kabel od koła do windy
         g2d.setColor(new Color(139, 69, 19));
@@ -205,17 +198,16 @@ public class ElevatorGUI extends JFrame {
         int elevatorTopY = (int) elevatorAnimationY;
 
         // Lina od koła do windy
-        g2d.drawLine(pulleyX, pulleyY + pulleyRadius, elevatorCenterX, elevatorTopY);
+        g2d.drawLine(circleX, cricleY + cricleRad, elevatorCenterX, elevatorTopY);
 
-        // Przeciwwaga (opcjonalnie po drugiej stronie)
+        // blok
         g2d.setColor(new Color(100, 100, 100));
-        int counterweightX = pulleyX + 50;
+        int counterweightX = circleX + 50;
         int counterweightY = (int)(400 - elevatorAnimationY + 300);
-
 
         // Lina do przeciwwagi
         g2d.setColor(new Color(139, 69, 19));
-        g2d.drawLine(pulleyX + pulleyRadius, pulleyY, counterweightX, counterweightY);
+        g2d.drawLine(circleX + cricleRad, cricleY, counterweightX, counterweightY);
 
         // Przeciwwaga
         g2d.setColor(new Color(80, 80, 80));
@@ -231,7 +223,7 @@ public class ElevatorGUI extends JFrame {
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         int elevatorX = 320;
-        int elevatorY = (int) elevatorAnimationY;
+        int elevatorY = (int)elevatorAnimationY;
         int elevatorWidth = 40;
         int elevatorHeight = 40;
 
@@ -245,6 +237,7 @@ public class ElevatorGUI extends JFrame {
         g2d.fillOval(elevatorX + elevatorWidth/2 - 3, elevatorY - 5, 6, 6);
         g2d.setColor(new Color(40, 40, 40));
         g2d.drawOval(elevatorX + elevatorWidth/2 - 3, elevatorY - 5, 6, 6);
+
         g2d.dispose();
     }
 
@@ -275,7 +268,7 @@ public class ElevatorGUI extends JFrame {
 
         for (int floor = 0; floor < building.getFloorsCount(); floor++) {
             int floorY = 600 - floor * 50;
-            int startX = 370;
+            int startX = 160;
 
             List<Passenger> floorPassengers = passengersOnFloorsDots.get(floor);
             for (int i = 0; i < floorPassengers.size(); i++) {
@@ -299,13 +292,13 @@ public class ElevatorGUI extends JFrame {
 
         for (int i = 0; i < building.getFloorsCount(); i++) {
             mainPanel.add(floorPanels[i]);
-            mainPanel.add(floorButtons[i]);
+            mainPanel.add(elevatorButtons[i]);
         }
 
         // Etykiety pięter
         for (int i = 0; i < building.getFloorsCount(); i++) {
             JLabel floorLabel = new JLabel("P" + i);
-            floorLabel.setBounds(80, 590 - i * 50, 30, 40);
+            floorLabel.setBounds(370, 590 - i * 50, 30, 40);
             floorLabel.setHorizontalAlignment(SwingConstants.CENTER);
             floorLabel.setVerticalAlignment(SwingConstants.CENTER);
             floorLabel.setFont(new Font("Arial", Font.BOLD, 12));
@@ -328,9 +321,9 @@ public class ElevatorGUI extends JFrame {
                 updateArrows();
             });
 
-            floorButtons[i].addActionListener(e -> {
+            elevatorButtons[i].addActionListener(e -> {
                 controller.selectDestination(floor);
-                floorButtons[floor].setEnabled(false);
+                elevatorButtons[floor].setEnabled(false);
             });
         }
 
@@ -453,7 +446,7 @@ public class ElevatorGUI extends JFrame {
 
     public void updateFloorButtonsAvailability() {
         for (int i = 0; i < building.getFloorsCount(); i++) {
-            floorButtons[i].setEnabled(
+            elevatorButtons[i].setEnabled(
                     controller.isSimulationRunning() &&
                             !elevator.isEmpty() &&
                             i != elevator.getCurrentFloor() &&
@@ -472,7 +465,7 @@ public class ElevatorGUI extends JFrame {
 
         for (int i = 0; i < building.getFloorsCount(); i++) {
             callButtons[i].setEnabled(false);
-            floorButtons[i].setEnabled(false);
+            elevatorButtons[i].setEnabled(false);
         }
 
         passengersInElevatorDots.clear();

@@ -390,20 +390,16 @@ public class ElevatorGUI extends JFrame {
         mainPanel.repaint();
     }
 
-    public void updateElevatorPassengersDisplay() {
-        mainPanel.repaint();
-    }
-
     public void addPassengerToElevator() {
         int dotIndex = passengersInElevatorDots.size();
-        int x = 5 + (dotIndex % 5) * 8;
-        int y = 5 + (dotIndex / 5) * 10;
+        int x = 5 + (dotIndex % 3) * 8;
+        int y = 5 + (dotIndex / 3) * 10;
 
         Color passengerColor = Utils.Utils.getFloorColor(elevator.getCurrentFloor());
         Passenger newDot = new Passenger(x, y, passengerColor, elevator.getCurrentFloor());
         passengersInElevatorDots.add(newDot);
 
-        updateElevatorPassengersDisplay();
+        mainPanel.repaint();
     }
 
     public void removePassengerFromElevator() {
@@ -416,7 +412,7 @@ public class ElevatorGUI extends JFrame {
                 dot.y = 5 + (i / 5) * 10;
             }
 
-            updateElevatorPassengersDisplay();
+            mainPanel.repaint();
         }
     }
 

@@ -3,27 +3,22 @@ package controler;
 import model.Building;
 import model.Elevator;
 import view.ElevatorGUI;
-
-import java.util.*;
 import javax.swing.JOptionPane;
 import javax.swing.Timer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.HashSet;
+import java.util.Set;
 
 public class ElevatorController {
-    private Elevator elevator;
-    private Building building;
-    private ElevatorGUI gui;
+    private  Elevator elevator;
+    private  Building building;
+    private  ElevatorGUI gui;
+
     private boolean simulationRunning = false;
-
-    private Timer movementTimer;
-    private Timer waitTimer;
-    private Timer exitTimer;
-    private Timer entryTimer;
-    private Timer continueTimer;
-    private Timer endTimer;
-
     private boolean isExitPhase = false;
+
+    private Timer mainTimer;
 
     public ElevatorController(Elevator elevator, Building building, ElevatorGUI gui) {
         this.elevator = elevator;
@@ -33,34 +28,26 @@ public class ElevatorController {
 
     public void startSimulation() {
         simulationRunning = true;
-
         building.generateRandomPassengers();
         elevator.setCurrentFloor(0);
         gui.updateAfterStart();
-
         System.out.println("Symulacja rozpoczęta!");
     }
 
     public void callElevator(int floor) {
         building.addCall(floor);
-        if (!elevator.isMoving() && !gui.isElevatorAnimating()) {
-            planNextMove();
-        }
         System.out.println("Wezwanie windy na piętro " + floor);
+        StartMovement();
     }
 
     public void selectDestination(int floor) {
         elevator.addDestination(floor);
-        if (!elevator.isMoving() && !gui.isElevatorAnimating()) {
-            planNextMove();
-        }
         System.out.println("Wybrano cel: piętro " + floor);
+        StartMovement();
     }
 
     public void exitPassenger() {
-        if (simulationRunning && !elevator.isMoving() && !gui.isElevatorAnimating() &&
-                !elevator.isEmpty() && isExitPhase) {
-
+        if (canExitPassenger()) {
             elevator.removePassenger();
             gui.removePassengerFromElevator();
             gui.updateFloorButtonsAvailability();
@@ -68,13 +55,19 @@ public class ElevatorController {
         }
     }
 
-    private void planNextMove() {
-        if (elevator.isMoving() || gui.isElevatorAnimating()) return;
+    private boolean canExitPassenger() {
+        return simulationRunning && !elevator.isMoving() &&
+                !gui.isElevatorAnimating() && !elevator.isEmpty() && isExitPhase;
+    }
+
+    private void StartMovement() {
+        if (elevator.isMoving() || gui.isElevatorAnimating()) {
+            return;
+        }
 
         int nextFloor = findNextDestination();
         if (nextFloor != -1) {
-            elevator.setDirection((nextFloor > elevator.getCurrentFloor()) ? 1 : -1);
-            startMoving();
+            startMovingToFloor(nextFloor);
         } else {
             elevator.setDirection(0);
             gui.updateArrows();
@@ -91,8 +84,9 @@ public class ElevatorController {
         int currentFloor = elevator.getCurrentFloor();
         int direction = elevator.getDirection();
         int closest = -1;
-        int minDistance = Integer.MAX_VALUE;
+        int minDistance = Integer.MAX_VALUE; // po to aby pierwsza iteracja przeszła
 
+        // Najpierw szukaj w kierunku ruchu (jeśli winda się porusza)
         if (direction != 0) {
             for (int target : allTargets) {
                 if ((direction > 0 && target > currentFloor) ||
@@ -106,6 +100,7 @@ public class ElevatorController {
             }
         }
 
+        // Jeśli nie znaleziono w kierunku ruchu, znajdź najbliższy ogólnie
         if (closest == -1) {
             for (int target : allTargets) {
                 int distance = Math.abs(target - currentFloor);
@@ -119,92 +114,89 @@ public class ElevatorController {
         return closest;
     }
 
-    private void startMoving() {
+    private void startMovingToFloor(int targetFloor) {
+        elevator.setDirection(targetFloor > elevator.getCurrentFloor() ? 1 : -1);
         elevator.setMoving(true);
         gui.updateArrows();
 
-        movementTimer = new Timer(1000, new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (!gui.isElevatorAnimating()) {
-                    elevator.moveForOneFloor();
-                    gui.updateElevatorPosition();
-
-                    // Sprawdź czy zatrzymać się na tym piętrze
-                    if (building.getCalls().contains(elevator.getCurrentFloor()) ||
-                            elevator.getDestinations().contains(elevator.getCurrentFloor())) {
-                        movementTimer.stop();
-                        waitForAnimationAndStop();
-                    }
-                }
-            }
-        });
-        movementTimer.setInitialDelay(500);
-        movementTimer.start();
+        mainTimer = new Timer(1000, new MoveActionListener());
+        mainTimer.setInitialDelay(500);
+        mainTimer.start();
     }
 
-    private void waitForAnimationAndStop() {
-        waitTimer = new Timer(50, new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (!gui.isElevatorAnimating()) {
-                    waitTimer.stop();
-                    stopAtFloor();
+    private class MoveActionListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (!gui.isElevatorAnimating()) {
+                elevator.moveForOneFloor();
+                gui.updateElevatorPosition();
+
+                if (shouldStopAtCurrentFloor()) {
+                    stopTimer();
+                    waitForAnimationThenStop();
                 }
+            }
+        }
+    }
+
+    private boolean shouldStopAtCurrentFloor() {
+        int currentFloor = elevator.getCurrentFloor();
+        return building.getCalls().contains(currentFloor) ||
+                elevator.getDestinations().contains(currentFloor);
+    }
+
+    private void waitForAnimationThenStop() {
+        Timer waitTimer = new Timer(50, e -> {
+            if (!gui.isElevatorAnimating()) {
+                ((Timer) e.getSource()).stop();
+                handleFloorStop();
             }
         });
         waitTimer.start();
     }
 
-    private void stopAtFloor() {
+    private void handleFloorStop() {
         elevator.setMoving(false);
         int currentFloor = elevator.getCurrentFloor();
 
         System.out.println("Winda zatrzymała się na piętrze " + currentFloor);
 
+        // Wyczyść wezwania i cele
         building.removeCall(currentFloor);
         elevator.removeDestination(currentFloor);
         gui.clearFloorCall(currentFloor);
+
         startPassengerExchange();
     }
 
     private void startPassengerExchange() {
         isExitPhase = true;
+        System.out.println("Faza wysiadania - 4 sekundy");
 
-        System.out.println("Faza wysiadania rozpoczęta - pasażerowie mają 4 sekundy na wysiadanie");
-
-        exitTimer = new Timer(4000, new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                exitTimer.stop();
-                isExitPhase = false;
-                startEntryPhase();
-            }
+        // Timer dla fazy wysiadania
+        Timer exitTimer = new Timer(4000, e -> {
+            ((Timer) e.getSource()).stop();
+            isExitPhase = false;
+            startEntryPhase();
         });
         exitTimer.setRepeats(false);
         exitTimer.start();
     }
 
     private void startEntryPhase() {
-        isExitPhase = false;
+        System.out.println("Faza wsiadania - 1 sekunda");
 
-        System.out.println("Faza wsiadania rozpoczęta 1 sekunda");
-
-        entryTimer = new Timer(1000, new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                entryTimer.stop();
-                enterPassengers();
-                gui.updateFloorButtonsAvailability();
-
-                planNextMove();
-            }
+        Timer entryTimer = new Timer(1000, e -> {
+            ((Timer) e.getSource()).stop();
+            processPassengerEntry();
+            gui.updateFloorButtonsAvailability();
+            StartMovement();
         });
         entryTimer.setRepeats(false);
         entryTimer.start();
     }
 
-    private void enterPassengers() {
+    private void processPassengerEntry() {
         int currentFloor = elevator.getCurrentFloor();
         int entering = Math.min(
                 building.getWaitingPassengers(currentFloor),
@@ -223,19 +215,15 @@ public class ElevatorController {
     }
 
     private void checkSimulationEnd() {
-        if (building.getCalls().isEmpty() &&
+        boolean shouldEnd = building.getCalls().isEmpty() &&
                 elevator.getDestinations().isEmpty() &&
-                elevator.isEmpty()) {
+                elevator.isEmpty();
 
-            endTimer = new Timer(10000, new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    endTimer.stop();
-                    if (building.getCalls().isEmpty() &&
-                            elevator.getDestinations().isEmpty() &&
-                            elevator.isEmpty()) {
-                        endSimulation();
-                    }
+        if (shouldEnd) {
+            Timer endTimer = new Timer(10000, e -> {
+                ((Timer) e.getSource()).stop();
+                if (isSimulationStillEmpty()) {
+                    endSimulation();
                 }
             });
             endTimer.setRepeats(false);
@@ -243,11 +231,16 @@ public class ElevatorController {
         }
     }
 
+    private boolean isSimulationStillEmpty() {
+        return building.getCalls().isEmpty() &&
+                elevator.getDestinations().isEmpty() &&
+                elevator.isEmpty();
+    }
+
     private void endSimulation() {
         simulationRunning = false;
-        stopAllTimers();
-
         isExitPhase = false;
+        stopTimer();
 
         gui.endSimulation();
 
@@ -255,24 +248,9 @@ public class ElevatorController {
         JOptionPane.showMessageDialog(gui, "Symulacja zakończona!");
     }
 
-    private void stopAllTimers() {
-        if (movementTimer != null && movementTimer.isRunning()) {
-            movementTimer.stop();
-        }
-        if (waitTimer != null && waitTimer.isRunning()) {
-            waitTimer.stop();
-        }
-        if (exitTimer != null && exitTimer.isRunning()) {
-            exitTimer.stop();
-        }
-        if (entryTimer != null && entryTimer.isRunning()) {
-            entryTimer.stop();
-        }
-        if (continueTimer != null && continueTimer.isRunning()) {
-            continueTimer.stop();
-        }
-        if (endTimer != null && endTimer.isRunning()) {
-            endTimer.stop();
+    private void stopTimer() {
+        if (mainTimer != null && mainTimer.isRunning()) {
+            mainTimer.stop();
         }
     }
 
@@ -283,5 +261,4 @@ public class ElevatorController {
     public boolean isExitPhase() {
         return isExitPhase;
     }
-
 }

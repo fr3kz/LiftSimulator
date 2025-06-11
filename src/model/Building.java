@@ -3,7 +3,7 @@ package model;
 import java.util.*;
 
 public class Building {
-    private static final int Floors = 11;
+    private int Floors = 11;
 
     private int[] waitingPassengers = new int[Floors];
     private Set<Integer> calls = new HashSet<>();

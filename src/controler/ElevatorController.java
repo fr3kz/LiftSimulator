@@ -2,40 +2,58 @@ package controler;
 
 import model.Building;
 import model.Elevator;
+import model.Passenger;
 import view.ElevatorGUI;
 import javax.swing.JOptionPane;
 import javax.swing.Timer;
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class ElevatorController {
-    private  Elevator elevator;
-    private  Building building;
-    private  ElevatorGUI gui;
+    private Elevator elevator;
+    private Building building;
+    private ElevatorGUI gui;
 
     private boolean simulationRunning = false;
     private boolean isExitPhase = false;
 
     private Timer mainTimer;
 
+    // Centralized passenger data
+    private final Set<Integer> activeCallFloors = new HashSet<>();
+    private final List<Passenger> passengersInElevator = new ArrayList<>();
+    private final List<List<Passenger>> passengersOnFloors = new ArrayList<>();
+
     public ElevatorController(Elevator elevator, Building building, ElevatorGUI gui) {
         this.elevator = elevator;
         this.building = building;
         this.gui = gui;
+        initializePassengerLists();
+    }
+
+    private void initializePassengerLists() {
+        for (int i = 0; i < building.getFloorsCount(); i++) {
+            passengersOnFloors.add(new ArrayList<>());
+        }
     }
 
     public void startSimulation() {
         simulationRunning = true;
         building.generateRandomPassengers();
         elevator.setCurrentFloor(0);
+        updateFloorPassengerVisuals();
         gui.updateAfterStart();
         System.out.println("Symulacja rozpoczęta!");
     }
 
     public void callElevator(int floor) {
         building.addCall(floor);
+        activeCallFloors.add(floor);
         System.out.println("Wezwanie windy na piętro " + floor);
         StartMovement();
     }
@@ -49,8 +67,8 @@ public class ElevatorController {
     public void exitPassenger() {
         if (canExitPassenger()) {
             elevator.removePassenger();
-            gui.removePassengerFromElevator();
-            gui.updateFloorButtonsAvailability();
+            removePassengerFromElevatorVisual();
+            gui.updateButtonStates();
             System.out.println("Pasażer wysiadł na piętrze " + elevator.getCurrentFloor());
         }
     }
@@ -84,7 +102,7 @@ public class ElevatorController {
         int currentFloor = elevator.getCurrentFloor();
         int direction = elevator.getDirection();
         int closest = -1;
-        int minDistance = Integer.MAX_VALUE; // po to aby pierwsza iteracja przeszła
+        int minDistance = Integer.MAX_VALUE;
 
         // Najpierw szukaj w kierunku ruchu (jeśli winda się porusza)
         if (direction != 0) {
@@ -164,7 +182,7 @@ public class ElevatorController {
         // Wyczyść wezwania i cele
         building.removeCall(currentFloor);
         elevator.removeDestination(currentFloor);
-        gui.clearFloorCall(currentFloor);
+        clearFloorCall(currentFloor);
 
         startPassengerExchange();
     }
@@ -173,7 +191,6 @@ public class ElevatorController {
         isExitPhase = true;
         System.out.println("Faza wysiadania - 4 sekundy");
 
-        // Timer dla fazy wysiadania
         Timer exitTimer = new Timer(4000, e -> {
             ((Timer) e.getSource()).stop();
             isExitPhase = false;
@@ -189,7 +206,6 @@ public class ElevatorController {
         Timer entryTimer = new Timer(1000, e -> {
             ((Timer) e.getSource()).stop();
             processPassengerEntry();
-            gui.updateFloorButtonsAvailability();
             StartMovement();
         });
         entryTimer.setRepeats(false);
@@ -205,11 +221,12 @@ public class ElevatorController {
 
         for (int i = 0; i < entering; i++) {
             elevator.addPassenger();
-            gui.addPassengerToElevator();
+            addPassengerToElevatorVisual();
         }
 
         building.removePassengers(currentFloor, entering);
-        gui.updateFloorPassengerDots(currentFloor);
+        updateFloorPassengerVisual(currentFloor);
+        gui.updateButtonStates();
 
         System.out.println("Wsiadło " + entering + " pasażerów na piętrze " + currentFloor);
     }
@@ -242,6 +259,13 @@ public class ElevatorController {
         isExitPhase = false;
         stopTimer();
 
+        // Reset visual data
+        activeCallFloors.clear();
+        passengersInElevator.clear();
+        for (List<Passenger> floorPassengers : passengersOnFloors) {
+            floorPassengers.clear();
+        }
+
         gui.endSimulation();
 
         System.out.println("Symulacja zakończona!");
@@ -254,11 +278,97 @@ public class ElevatorController {
         }
     }
 
-    public boolean isSimulationRunning() {
-        return simulationRunning;
+    // Visual management methods
+    private void updateFloorPassengerVisuals() {
+        for (int floor = 0; floor < building.getFloorsCount(); floor++) {
+            updateFloorPassengerVisual(floor);
+        }
     }
 
-    public boolean isExitPhase() {
-        return isExitPhase;
+    private void updateFloorPassengerVisual(int floor) {
+        List<Passenger> floorDots = passengersOnFloors.get(floor);
+        int waitingPassengers = building.getWaitingPassengers(floor);
+
+        // Dodaj brakujących pasażerów
+        while (floorDots.size() < waitingPassengers) {
+            Color passengerColor = Utils.Utils.getRandomPassengerColor();
+            Passenger newPassenger = new Passenger(0, 0, passengerColor, floor);
+            floorDots.add(newPassenger);
+        }
+
+        // Usuń nadmiarowych pasażerów
+        while (floorDots.size() > waitingPassengers) {
+            floorDots.remove(floorDots.size() - 1);
+        }
+
+        gui.repaint();
     }
+
+    private void addPassengerToElevatorVisual() {
+        int dotIndex = passengersInElevator.size();
+        int x = 5 + (dotIndex % 3) * 8;
+        int y = 5 + (dotIndex / 3) * 10;
+
+        Color passengerColor = Utils.Utils.getFloorColor(elevator.getCurrentFloor());
+        Passenger newPassenger = new Passenger(x, y, passengerColor, elevator.getCurrentFloor());
+        passengersInElevator.add(newPassenger);
+
+        gui.repaint();
+    }
+
+    private void removePassengerFromElevatorVisual() {
+        if (!passengersInElevator.isEmpty()) {
+            passengersInElevator.remove(0);
+            repositionPassengersInElevator();
+            gui.repaint();
+        }
+    }
+
+    private void repositionPassengersInElevator() {
+        for (int i = 0; i < passengersInElevator.size(); i++) {
+            Passenger passenger = passengersInElevator.get(i);
+            passenger.x = 5 + (i % 3) * 8;
+            passenger.y = 5 + (i / 3) * 10;
+        }
+    }
+
+    private void clearFloorCall(int floor) {
+        activeCallFloors.remove(floor);
+        gui.updateArrows();
+    }
+
+    // Getters for GUI to access data
+    public Set<Integer> getActiveCallFloors() {
+        return activeCallFloors;
+    }
+
+    public List<Passenger> getPassengersInElevator() {
+        return passengersInElevator;
+    }
+
+    public List<List<Passenger>> getPassengersOnFloors() {
+        return passengersOnFloors;
+    }
+
+    public int determineDirectionForFloor(int floor) {
+        int elevatorDirection = elevator.getDirection();
+        int currentFloor = elevator.getCurrentFloor();
+
+        if (elevatorDirection != 0) {
+            return elevatorDirection;
+        } else {
+            return Integer.compare(floor, currentFloor);
+        }
+    }
+
+    public boolean shouldEnableElevatorButton(int floor) {
+        return !elevator.isEmpty() &&
+                floor != elevator.getCurrentFloor() &&
+                !elevator.getDestinations().contains(floor);
+    }
+
+    public boolean shouldEnableCallButton(int floor) {
+        return building.hasWaitingPassengers(floor);
+    }
+
 }

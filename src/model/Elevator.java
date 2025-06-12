@@ -34,10 +34,6 @@ public class Elevator {
         this.direction = direction;
     }
 
-    public List<Integer> getPassengersInElevator() {
-        return passengersInElevator;
-    }
-
     public List<Integer> getDestinations() {
         return destinations;
     }

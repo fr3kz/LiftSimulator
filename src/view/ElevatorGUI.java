@@ -417,6 +417,7 @@ public class ElevatorGUI extends JFrame {
         for (int i = 0; i < building.getFloorsCount(); i++) {
             callButtons[i].setEnabled(false);
             elevatorButtons[i].setEnabled(false);
+            building.removePassengers(i, building.getWaitingPassengers(i));
         }
 
         updateArrows();

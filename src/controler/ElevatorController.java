@@ -24,7 +24,6 @@ public class ElevatorController {
 
     private Timer mainTimer;
 
-    // Centralized passenger data - tylko dla windy i wezwań
     private final Set<Integer> activeCallFloors = new HashSet<>();
     private final List<Passenger> passengersInElevator = new ArrayList<>();
 
@@ -39,7 +38,7 @@ public class ElevatorController {
         building.generateRandomPassengers();
         elevator.setCurrentFloor(0);
         gui.updateAfterStart();
-        gui.repaint(); // Dodane - odśwież ekran od razu po starcie
+        gui.repaint();
         System.out.println("Symulacja rozpoczęta!");
     }
 
@@ -96,7 +95,6 @@ public class ElevatorController {
         int closest = -1;
         int minDistance = Integer.MAX_VALUE;
 
-        // Najpierw szukaj w kierunku ruchu (jeśli winda się porusza)
         if (direction != 0) {
             for (int target : allTargets) {
                 if ((direction > 0 && target > currentFloor) ||
@@ -110,7 +108,6 @@ public class ElevatorController {
             }
         }
 
-        // Jeśli nie znaleziono w kierunku ruchu, znajdź najbliższy ogólnie
         if (closest == -1) {
             for (int target : allTargets) {
                 int distance = Math.abs(target - currentFloor);
@@ -327,11 +324,4 @@ public class ElevatorController {
         return building.hasWaitingPassengers(floor);
     }
 
-    public boolean isSimulationRunning() {
-        return simulationRunning;
-    }
-
-    public boolean isExitPhase() {
-        return isExitPhase;
-    }
 }

@@ -274,21 +274,20 @@ public class ElevatorGUI extends JFrame {
         Graphics2D g2d = (Graphics2D) g.create();
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        List<List<Passenger>> passengersOnFloors = controller.getPassengersOnFloors();
-
         for (int floor = 0; floor < building.getFloorsCount(); floor++) {
             int floorY = 600 - floor * floor_height;
             int startX = 160;
 
-            List<Passenger> floorPassengers = passengersOnFloors.get(floor);
-            for (int i = 0; i < floorPassengers.size(); i++) {
-                Passenger passenger = floorPassengers.get(i);
+            int waitingPassengers = building.getWaitingPassengers(floor);
+
+            for (int i = 0; i < waitingPassengers; i++) {
+                Color passengerColor = Utils.Utils.getFloorColor(floor);
                 int x = startX + i * 12;
                 int y = floorY + 10;
 
-                g2d.setColor(passenger.color);
+                g2d.setColor(passengerColor);
                 g2d.fillOval(x, y, 6, 6);
-                g2d.setColor(passenger.color.darker());
+                g2d.setColor(passengerColor.darker());
                 g2d.drawOval(x, y, 6, 6);
             }
         }
@@ -363,15 +362,12 @@ public class ElevatorGUI extends JFrame {
     }
 
     public void updateElevatorPosition() {
-        startElevatorAnimation(elevator.getCurrentFloor());
-    }
-
-    public void startElevatorAnimation(int floor) {
-        targetFloor = floor;
+        targetFloor = elevator.getCurrentFloor();
         if (!isAnimating) {
             isAnimating = true;
             animationTimer.start();
         }
+
     }
 
     public boolean isElevatorAnimating() {

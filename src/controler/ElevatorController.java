@@ -24,30 +24,22 @@ public class ElevatorController {
 
     private Timer mainTimer;
 
-    // Centralized passenger data
+    // Centralized passenger data - tylko dla windy i wezwań
     private final Set<Integer> activeCallFloors = new HashSet<>();
     private final List<Passenger> passengersInElevator = new ArrayList<>();
-    private final List<List<Passenger>> passengersOnFloors = new ArrayList<>();
 
     public ElevatorController(Elevator elevator, Building building, ElevatorGUI gui) {
         this.elevator = elevator;
         this.building = building;
         this.gui = gui;
-        initializePassengerLists();
-    }
-
-    private void initializePassengerLists() {
-        for (int i = 0; i < building.getFloorsCount(); i++) {
-            passengersOnFloors.add(new ArrayList<>());
-        }
     }
 
     public void startSimulation() {
         simulationRunning = true;
         building.generateRandomPassengers();
         elevator.setCurrentFloor(0);
-        updateFloorPassengerVisuals();
         gui.updateAfterStart();
+        gui.repaint(); // Dodane - odśwież ekran od razu po starcie
         System.out.println("Symulacja rozpoczęta!");
     }
 
@@ -179,7 +171,6 @@ public class ElevatorController {
 
         System.out.println("Winda zatrzymała się na piętrze " + currentFloor);
 
-        // Wyczyść wezwania i cele
         building.removeCall(currentFloor);
         elevator.removeDestination(currentFloor);
         clearFloorCall(currentFloor);
@@ -225,7 +216,7 @@ public class ElevatorController {
         }
 
         building.removePassengers(currentFloor, entering);
-        updateFloorPassengerVisual(currentFloor);
+        gui.repaint();
         gui.updateButtonStates();
 
         System.out.println("Wsiadło " + entering + " pasażerów na piętrze " + currentFloor);
@@ -259,12 +250,8 @@ public class ElevatorController {
         isExitPhase = false;
         stopTimer();
 
-        // Reset visual data
         activeCallFloors.clear();
         passengersInElevator.clear();
-        for (List<Passenger> floorPassengers : passengersOnFloors) {
-            floorPassengers.clear();
-        }
 
         gui.endSimulation();
 
@@ -276,32 +263,6 @@ public class ElevatorController {
         if (mainTimer != null && mainTimer.isRunning()) {
             mainTimer.stop();
         }
-    }
-
-    // Visual management methods
-    private void updateFloorPassengerVisuals() {
-        for (int floor = 0; floor < building.getFloorsCount(); floor++) {
-            updateFloorPassengerVisual(floor);
-        }
-    }
-
-    private void updateFloorPassengerVisual(int floor) {
-        List<Passenger> floorDots = passengersOnFloors.get(floor);
-        int waitingPassengers = building.getWaitingPassengers(floor);
-
-        // Dodaj brakujących pasażerów
-        while (floorDots.size() < waitingPassengers) {
-            Color passengerColor = Utils.Utils.getRandomPassengerColor();
-            Passenger newPassenger = new Passenger(0, 0, passengerColor, floor);
-            floorDots.add(newPassenger);
-        }
-
-        // Usuń nadmiarowych pasażerów
-        while (floorDots.size() > waitingPassengers) {
-            floorDots.remove(floorDots.size() - 1);
-        }
-
-        gui.repaint();
     }
 
     private void addPassengerToElevatorVisual() {
@@ -337,17 +298,12 @@ public class ElevatorController {
         gui.updateArrows();
     }
 
-    // Getters for GUI to access data
     public Set<Integer> getActiveCallFloors() {
         return activeCallFloors;
     }
 
     public List<Passenger> getPassengersInElevator() {
         return passengersInElevator;
-    }
-
-    public List<List<Passenger>> getPassengersOnFloors() {
-        return passengersOnFloors;
     }
 
     public int determineDirectionForFloor(int floor) {
@@ -371,4 +327,11 @@ public class ElevatorController {
         return building.hasWaitingPassengers(floor);
     }
 
+    public boolean isSimulationRunning() {
+        return simulationRunning;
+    }
+
+    public boolean isExitPhase() {
+        return isExitPhase;
+    }
 }

@@ -24,8 +24,9 @@ public class ElevatorController {
 
     private Timer mainTimer;
 
-    private final Set<Integer> activeCallFloors = new HashSet<>();
-    private final List<Passenger> passengersInElevator = new ArrayList<>();
+    //z srodka windy
+    private Set<Integer> activeCallFloors = new HashSet<>();
+    private List<Passenger> passengersInElevator = new ArrayList<>();
 
     public ElevatorController(Elevator elevator, Building building, ElevatorGUI gui) {
         this.elevator = elevator;
@@ -44,7 +45,6 @@ public class ElevatorController {
 
     public void callElevator(int floor) {
         building.addCall(floor);
-        activeCallFloors.add(floor);
         System.out.println("Wezwanie windy na piętro " + floor);
         StartMovement();
     }

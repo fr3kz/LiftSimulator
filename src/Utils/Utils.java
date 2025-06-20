@@ -18,20 +18,4 @@ public class Utils {
         };
         return floorColors[floor % floorColors.length];
     }
-
-    public static Color getRandomPassengerColor() {
-        Color[] passengerColors = {
-                new Color(255, 80, 80),   // Czerwony
-                new Color(80, 255, 80),   // Zielony
-                new Color(80, 80, 255),   // Niebieski
-                new Color(255, 255, 80),  // Żółty
-                new Color(255, 80, 255),  // Magenta
-                new Color(80, 255, 255),  // Cyan
-                new Color(255, 165, 0),   // Pomarańczowy
-                new Color(128, 0, 128),   // Fioletowy
-                new Color(255, 192, 203), // Różowy
-                new Color(0, 128, 0)      // Ciemnozielony
-        };
-        return passengerColors[(int) (Math.random() * passengerColors.length)];
-    }
 }

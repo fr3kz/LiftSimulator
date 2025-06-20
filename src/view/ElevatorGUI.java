@@ -38,7 +38,6 @@ public class ElevatorGUI extends JFrame {
         initializeModels();
         setupWindow();
         initializeComponents();
-        setupLayout();
         setupEventHandlers();
         setupAnimationTimer();
     }
@@ -63,6 +62,7 @@ public class ElevatorGUI extends JFrame {
         createStartButton();
         createFloorComponents();
         createElevatorButtons();
+        setupFloorTitle();
     }
 
     private void createMainPanel() {
@@ -103,6 +103,7 @@ public class ElevatorGUI extends JFrame {
         floorPanels[floor].setBounds(450, 590 - floor * floor_height, 120, 40);
         floorPanels[floor].setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY, 2));
         floorPanels[floor].setBackground(new Color(240, 240, 240));
+        floorPanels[floor].setFocusable(false);
     }
 
     private void createCallButton(int floor) {
@@ -127,7 +128,7 @@ public class ElevatorGUI extends JFrame {
 
         for (int i = 0; i < floorCount; i++) {
             elevatorButtons[i] = new JButton(String.valueOf(i));
-            elevatorButtons[i].setBounds(15 + (i % 3) * 40, 500 + (i / 3) * 40, 35, 35);
+            elevatorButtons[i].setBounds(5 + (i % 3) * 49, 500 + (i / 3) * 49, 49, 49);
             elevatorButtons[i].setEnabled(false);
             elevatorButtons[i].setFocusable(false);
         }
@@ -295,7 +296,7 @@ public class ElevatorGUI extends JFrame {
         g2d.dispose();
     }
 
-    private void setupLayout() {
+    private void setupFloorTitle() {
         mainPanel.add(startButton);
 
         for (int i = 0; i < building.getFloorsCount(); i++) {

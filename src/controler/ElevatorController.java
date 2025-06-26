@@ -97,8 +97,7 @@ public class ElevatorController {
 
         if (direction != 0) {
             for (int target : allTargets) {
-                if ((direction > 0 && target > currentFloor) ||
-                        (direction < 0 && target < currentFloor)) {
+                if ((direction > 0 && target > currentFloor) || (direction < 0 && target < currentFloor)) {
                     int distance = Math.abs(target - currentFloor);
                     if (distance < minDistance) {
                         closest = target;

@@ -12,9 +12,7 @@ public class Building {
         return Floors;
     }
 
-    public int[] getWaitingPassengers() {
-        return waitingPassengers;
-    }
+
 
     public int getWaitingPassengers(int floor) {
         return waitingPassengers[floor];
